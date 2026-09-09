@@ -589,26 +589,35 @@ Examples:
         
     from rich.console import Console
     from rich.table import Table
-    from rich.panel import Panel
-    from rich.text import Text
+    from rich.theme import Theme
+    from rich.rule import Rule
+    from rich.columns import Columns
+    from rich.tree import Tree
     from rich import box
     
-    console = Console()
+    custom_theme = Theme({
+        "base": "#1F2937",
+        "header": "bold #4338CA",
+        "danger": "bold #991B1B",
+        "safe": "bold #065F46",
+        "border": "#0A192F"
+    })
+    console = Console(theme=custom_theme)
     
-    # [ EMAIL TEXT ANALYSIS & MATHEMATICS ]
-    console.print(Panel(Text("EMAIL TEXT ANALYSIS & MATHEMATICS", justify="center", style="bold blue"), box=box.DOUBLE))
+    # EMAIL TEXT ANALYSIS & MATHEMATICS
+    console.print(Rule("EMAIL TEXT ANALYSIS & MATHEMATICS", style="header"))
     
     # Overview Table
-    overview_table = Table(show_header=False, box=box.ROUNDED)
-    overview_table.add_row("Formula:", "P_fused(c) = 0.40 * P_legacy(c) + 0.60 * P_modern(c)")
-    overview_table.add_row("Base NLP Prediction:", response['mathematical_breakdown']['baseline_nlp_prediction'].upper())
-    overview_table.add_row("Policy Override:", 'YES' if response['mathematical_breakdown']['security_policy_override'] else 'NO')
-    console.print(overview_table)
+    overview_table = Table(show_header=False, box=box.SQUARE, border_style="border", expand=False)
+    overview_table.add_row("Formula:", "P_fused(c) = 0.40 * P_legacy(c) + 0.60 * P_modern(c)", style="base")
+    nlp_pred = response['mathematical_breakdown']['baseline_nlp_prediction'].upper()
+    overview_table.add_row("Base NLP Prediction:", nlp_pred, style="danger" if nlp_pred in ["PHISHING", "SPAM", "MALWARE"] else "safe")
+    overview_table.add_row("Policy Override:", 'YES' if response['mathematical_breakdown']['security_policy_override'] else 'NO', style="base")
     
     # Dual-Engine Class Probabilities Table
-    prob_table = Table(title="Dual-Engine Class Probabilities", title_style="bold magenta", box=box.ROUNDED)
-    prob_table.add_column("Engine", style="blue")
-    prob_table.add_column("Probabilities", style="black")
+    prob_table = Table(title="Dual-Engine Class Probabilities", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+    prob_table.add_column("Engine", style="base")
+    prob_table.add_column("Probabilities", style="base")
     
     legacy_breakdown = ", ".join([f"{k}: {v}%" for k, v in response['mathematical_breakdown']['engine_breakdown']['legacy'].items()])
     modern_breakdown = ", ".join([f"{k}: {v}%" for k, v in response['mathematical_breakdown']['engine_breakdown']['modern'].items()])
@@ -617,27 +626,28 @@ Examples:
     prob_table.add_row("Legacy Engine (40%)", legacy_breakdown)
     prob_table.add_row("Modern Engine (60%)", modern_breakdown)
     prob_table.add_row("Final Class Probs", final_probs_str)
-    console.print(prob_table)
     
     # Adversarial Metrics Table
-    adv_table = Table(title="Adversarial Metrics", title_style="bold red", box=box.ROUNDED)
-    adv_table.add_column("Metric", style="blue")
-    adv_table.add_column("Value", style="magenta")
+    adv_table = Table(title="Adversarial Metrics", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+    adv_table.add_column("Metric", style="base")
+    adv_table.add_column("Value", style="danger")
     
     hg_note = f" ({response['adversarial_defense'].get('homoglyphs_count', 0)} detected & normalized)" if response['adversarial_defense']['homoglyphs_normalized'] else ""
     adv_table.add_row("Homoglyphs Normalized", f"{response['adversarial_defense']['homoglyphs_normalized']}{hg_note}")
     adv_table.add_row("Zero-Width Chars", str(response['adversarial_defense']['zero_width_chars_removed']))
-    evasion_str = "YES (Adversarial Evasion Defeated)" if response['adversarial_defense']['evasion_detected'] else "False"
+    evasion_str = "YES" if response['adversarial_defense']['evasion_detected'] else "False"
     adv_table.add_row("Evasion Detected", evasion_str)
-    console.print(adv_table)
+
+    console.print(overview_table)
+    console.print(Columns([prob_table, adv_table], expand=False))
     
     # Explainable AI Table
-    xai_table = Table(title="Explainable AI (Why the Model Flagged This Email)", title_style="bold magenta", box=box.ROUNDED)
-    xai_table.add_column("No.", style="bold black")
-    xai_table.add_column("Token", style="blue")
-    xai_table.add_column("Location", style="magenta")
-    xai_table.add_column("Reason", style="black")
-    xai_table.add_column("Influence", style="red")
+    xai_table = Table(title="Explainable AI (Why the Model Flagged This Email)", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+    xai_table.add_column("No.", style="base")
+    xai_table.add_column("Token", style="base")
+    xai_table.add_column("Location", style="base")
+    xai_table.add_column("Reason", style="base")
+    xai_table.add_column("Influence", style="danger")
     
     top_toks = response['explainable_ai']['top_contributing_tokens']
     if top_toks:
@@ -649,48 +659,50 @@ Examples:
             xai_table.add_row(str(i), w, loc, reason, f"+{pct}%")
     else:
         xai_table.add_row("-", "None", "-", "No single linguistic word token exceeded the threat threshold", "-")
-    console.print(xai_table)
     
     # Extracted Email Features Table
-    feat_table = Table(title="Extracted Email Features (Metadata)", title_style="bold blue", box=box.ROUNDED)
-    feat_table.add_column("Feature", style="blue")
-    feat_table.add_column("Value", style="black")
+    feat_table = Table(title="Extracted Email Features", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+    feat_table.add_column("Feature", style="base")
+    feat_table.add_column("Value", style="base")
     sorted_email_feats = sorted([(k, v) for k, v in response['extracted_features'].items() if v > 0], key=lambda x: x[1], reverse=True)
     if sorted_email_feats:
         for k, v in sorted_email_feats:
             feat_table.add_row(k.replace('_', ' ').title(), str(round(v, 4)))
     else:
-        feat_table.add_row("None", "No significant numerical features extracted")
-    console.print(feat_table)
+        feat_table.add_row("None", "No significant features")
+
+    console.print(Columns([xai_table, feat_table], expand=False))
     
     # Voting Weights & SVM Margin Table
-    svm_table = Table(title="Voting Weights & SVM Margin", title_style="bold magenta", box=box.ROUNDED)
-    svm_table.add_column("Metric", style="blue")
-    svm_table.add_column("Value", style="magenta")
+    svm_table = Table(title="Voting Weights & SVM Margin", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+    svm_table.add_column("Metric", style="base")
+    svm_table.add_column("Value", style="base")
     svm_table.add_row("Legacy Engine Weight", f"{response['mathematical_breakdown']['ensemble_weights']['legacy'] * 100}%")
     svm_table.add_row("Modern Engine Weight", f"{response['mathematical_breakdown']['ensemble_weights']['modern'] * 100}%")
     svm_table.add_row("Raw SVM Margin f(x)", str(response['mathematical_breakdown']['raw_margin_f_x']))
     console.print(svm_table)
     
     # Step-by-Step Mathematics & Decision Process
-    step_table = Table(title="Step-by-Step Mathematics & Decision Process", title_style="bold black", show_header=False, box=box.ROUNDED)
-    step_table.add_column("Step", style="black")
+    math_tree = Tree("[header]Step-by-Step Mathematics & Decision Process[/header]", guide_style="border")
     for step in response['mathematical_breakdown']['step_by_step']:
-        step_table.add_row(f"- {step}")
-    console.print(step_table)
+        math_tree.add(f"[base]{step}[/base]")
+    console.print(math_tree)
     
     # URL THREAT ENGINE ANALYSIS & MATHEMATICS
     if response.get('detailed_url_analysis'):
-        console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="bold blue"), box=box.DOUBLE))
-        console.print("Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  [bold black][Softmax Normalization][/bold black]\n")
+        console.print(Rule("URL THREAT ENGINE ANALYSIS & MATHEMATICS", style="header"))
+        console.print("[base]Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  (Softmax Normalization)[/base]\n")
         
         for i, url_res in enumerate(response['detailed_url_analysis']):
             url_str = response['extracted_urls'][i] if i < len(response['extracted_urls']) else 'Unknown'
-            url_table = Table(title=f"URL: {url_str}", title_style="bold magenta", box=box.ROUNDED)
-            url_table.add_column("Metric", style="blue")
-            url_table.add_column("Value", style="black")
+            url_table = Table(title=f"URL: {url_str}", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+            url_table.add_column("Metric", style="base")
+            url_table.add_column("Value", style="base")
             
-            url_table.add_row("Status", f"[bold red]{url_res.get('status', 'Unknown').upper()}[/bold red]")
+            u_status = url_res.get('status', 'Unknown').upper()
+            u_color = "danger" if u_status in ["PHISHING", "MALWARE", "DEFACEMENT"] else "safe"
+            url_table.add_row("Status", f"[{u_color}]{u_status}[/{u_color}]")
+            
             probs = url_res.get('class_probabilities', {})
             if probs:
                 prob_str = ", ".join([f"{k}: {v}%" for k, v in probs.items()])
@@ -704,20 +716,17 @@ Examples:
             
             console.print(url_table)
             
-            # Step-by-Step
             if math_breakdown.get('step_by_step'):
-                u_step_table = Table(title="Softmax Step-by-Step", title_style="bold black", show_header=False, box=box.ROUNDED)
-                u_step_table.add_column("Step", style="bold black")
+                u_tree = Tree("[header]Softmax Step-by-Step[/header]", guide_style="border")
                 for step in math_breakdown.get('step_by_step', []):
-                    u_step_table.add_row(f"- {step}")
-                console.print(u_step_table)
+                    u_tree.add(f"[base]{step}[/base]")
+                console.print(u_tree)
             
-            # URL Explanation & Key Factors
             url_summary = url_res.get('analysis_summary', {})
             if url_summary:
-                u_expl_table = Table(title="URL Threat Explanation & Key Factors", title_style="bold red", box=box.ROUNDED)
-                u_expl_table.add_column("Detail", style="blue")
-                u_expl_table.add_column("Information", style="black")
+                u_expl_table = Table(title="URL Threat Explanation & Key Factors", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+                u_expl_table.add_column("Detail", style="base")
+                u_expl_table.add_column("Information", style="base")
                 u_expl_table.add_row("Headline", url_summary.get('headline', 'N/A'))
                 u_expl_table.add_row("Explanation", url_summary.get('explanation', 'N/A'))
                 
@@ -726,17 +735,17 @@ Examples:
                     kf_str = "\n".join([f"- {kf}" for kf in url_kf])
                     u_expl_table.add_row("Key Risk Factors", kf_str)
                 console.print(u_expl_table)
-            console.print("-" * 40)
+            console.print(Rule(style="border"))
             
     # FINAL COMBINED VERDICT
-    console.print(Panel(Text("FINAL COMBINED VERDICT", justify="center", style="bold red"), box=box.DOUBLE))
+    console.print(Rule("FINAL COMBINED VERDICT", style="danger"))
     
-    final_table = Table(show_header=False, box=box.ROUNDED)
-    final_table.add_column("Property", style="bold blue")
-    final_table.add_column("Value", style="bold black")
+    final_table = Table(show_header=False, box=box.SQUARE, border_style="border", expand=False)
+    final_table.add_column("Property", style="header")
+    final_table.add_column("Value", style="base")
     
     final_status = response['status'].upper()
-    status_color = "red" if final_status in ["PHISHING", "MALWARE"] else ("yellow" if final_status == "SPAM" else "green")
+    status_color = "danger" if final_status in ["PHISHING", "MALWARE", "SPAM"] else "safe"
     
     final_table.add_row("ABSOLUTE DECISION:", f"[{status_color}]{final_status}[/{status_color}]")
     final_table.add_row("Threat Severity:", response['threat_intelligence']['severity'])
@@ -746,33 +755,34 @@ Examples:
     
     summary = response['analysis_summary']
     if isinstance(summary, dict):
-        syn_table = Table(title="Key Security Factors (Synthesized Across All Modalities)", title_style="bold blue", box=box.ROUNDED)
-        syn_table.add_column("Modality", style="blue")
-        syn_table.add_column("Factors", style="black")
+        syn_tree = Tree("[header]Key Security Factors (Synthesized Across All Modalities)[/header]", guide_style="border")
         
         if summary.get('text_factors'):
-            tf_str = "\n".join([f"- {factor}" for factor in summary.get('text_factors', [])])
-            syn_table.add_row("Email Text Analysis", tf_str)
+            text_node = syn_tree.add("[base]Email Text Analysis[/base]")
+            for factor in summary.get('text_factors', []):
+                text_node.add(f"[base]{factor}[/base]")
         if summary.get('adversarial_factors'):
-            af_str = "\n".join([f"- {factor}" for factor in summary.get('adversarial_factors', [])])
-            syn_table.add_row("Adversarial Defense Telemetry", af_str)
+            adv_node = syn_tree.add("[base]Adversarial Defense Telemetry[/base]")
+            for factor in summary.get('adversarial_factors', []):
+                adv_node.add(f"[base]{factor}[/base]")
         if summary.get('url_factors'):
-            uf_str = "\n".join([f"- {factor}" for factor in summary.get('url_factors', [])])
-            syn_table.add_row("URL Threat Engine Analysis", uf_str)
-        console.print(syn_table)
+            url_node = syn_tree.add("[base]URL Threat Engine Analysis[/base]")
+            for factor in summary.get('url_factors', []):
+                url_node.add(f"[base]{factor}[/base]")
+        console.print(syn_tree)
         
-        exp_table = Table(title="Comprehensive Final Explanation", title_style="bold magenta", box=box.ROUNDED)
-        exp_table.add_column("Field", style="blue")
-        exp_table.add_column("Text", style="black")
+        exp_table = Table(title="Comprehensive Final Explanation", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+        exp_table.add_column("Field", style="base")
+        exp_table.add_column("Text", style="base")
         exp_table.add_row("Headline", summary.get('headline', ''))
         exp_table.add_row("Explanation", summary.get('explanation', ''))
         console.print(exp_table)
         
     elif isinstance(summary, list):
         for summary_line in summary:
-            console.print(summary_line)
+            console.print(f"[base]{summary_line}[/base]")
     else:
-        console.print(summary)
+        console.print(f"[base]{summary}[/base]")
 
 if __name__ == "__main__":
     main()
