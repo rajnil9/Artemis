@@ -74,27 +74,44 @@ def scan_semantic_threats(subject, body):
     
     return bec_hits, spam_hits
 
-def generate_analysis_summary(prediction, subject, body, threat_factors=None, adversarial_defense=None, url_results=None):
+def generate_analysis_summary(prediction, subject, body, threat_factors=None, adversarial_defense=None, url_results=None, email_prediction=None):
     headlines = {
         "safe": "Classified as Safe",
         "phishing": "High Risk: Phishing / BEC Alert",
-        "spam": "Warning: Spam Detected"
+        "spam": "Warning: Spam Detected",
+        "malware": "Critical Risk: Malware Payload Detected",
+        "defacement": "Warning: Defaced or Compromised Host"
     }
     explanations = {
         "safe": "The email exhibits characteristics of normal conversational or transactional communication with no malicious payload.",
         "phishing": "The email contains indicators of social engineering, credential harvesting, financial redirection, or deceptive intent.",
-        "spam": "The email contains bulk commercial marketing, financial hype, or unsolicited promotional content."
+        "spam": "The email contains bulk commercial marketing, financial hype, or unsolicited promotional content.",
+        "malware": "The email contains a link to a known malicious binary or executable payload designed to compromise the host system.",
+        "defacement": "The email links to a compromised CMS or defaced website, posing a security risk to visitors."
     }
     
-    # Check for multi-vector threat
-    has_malicious_url = any(u.get('status') in ['phishing', 'malware', 'defacement'] for u in (url_results or []))
-    if prediction == "phishing" and has_malicious_url:
-        headline = "High Risk: Multi-Vector Phishing Attack (Deceptive Text + Hostile URL)"
-        explanation = "The email pairs coercive social engineering messaging with confirmed malicious/phishing links to execute an attack."
-    else:
-        headline = headlines.get(prediction, "Unknown Classification")
-        explanation = explanations.get(prediction, "No explanation available.")
+    if email_prediction is None:
+        email_prediction = prediction
+        
+    email_headline = headlines.get(email_prediction, f"Warning: {email_prediction.upper()} Detected")
+    email_explanation = explanations.get(email_prediction, f"The email text was flagged as {email_prediction}.")
     
+    headline = headlines.get(prediction, f"Warning: {prediction.upper()} Detected")
+    explanation = explanations.get(prediction, f"The email was flagged as {prediction}.")
+    
+    # Dynamically combine URL and Email text explanation
+    malicious_urls = [u for u in (url_results or []) if u.get('status') in ['phishing', 'malware', 'defacement']]
+    if malicious_urls:
+        url_threats = set([u.get('status') for u in malicious_urls])
+        threat_str = "/".join(url_threats).upper()
+        
+        if threat_factors or email_prediction in ["phishing", "spam"]:
+            headline = f"High Risk: Multi-Vector Attack (Deceptive Text + Hostile {threat_str} URL)"
+            explanation = f"This is a coordinated multi-vector attack. The email uses deceptive textual messaging or social engineering, paired directly with a hostile {threat_str} link to execute the payload."
+        else:
+            headline = f"Critical Risk: Embedded Hostile {threat_str} Link"
+            explanation = f"While the email text itself may appear benign, it acts as a carrier for a highly dangerous {threat_str} link. Clicking the embedded link poses an immediate security risk."
+            
     text_factors = [tf[1] if isinstance(tf, tuple) else tf for tf in threat_factors] if threat_factors else []
     
     # Re-extract statistical features
@@ -161,6 +178,8 @@ def generate_analysis_summary(prediction, subject, body, threat_factors=None, ad
     return {
         "headline": headline,
         "explanation": explanation,
+        "email_headline": email_headline,
+        "email_explanation": email_explanation,
         "text_factors": text_factors[:4],
         "adversarial_factors": adv_factors,
         "url_factors": url_factors,
@@ -468,6 +487,7 @@ Examples:
         
     fusion_triggered = False
     fusion_reason = ""
+    email_prediction = "phishing" if bec_hits else ("spam" if spam_hits else statistical_prediction)
     
     if highest_url_threat == "malware":
         prediction = "phishing"
@@ -491,12 +511,13 @@ Examples:
         class_probabilities = {"phishing": 98.00, "safe": 1.00, "spam": 1.00}
             
     analysis_summary = generate_analysis_summary(
-        prediction, 
-        subject, 
-        body, 
+        prediction=prediction, 
+        subject=subject, 
+        body=body, 
         threat_factors=threat_factors,
         adversarial_defense=adversarial_defense,
-        url_results=url_results
+        url_results=url_results,
+        email_prediction=email_prediction
     )
     
     # Extract raw margin from LinearSVC inside CalibratedClassifierCV
@@ -697,8 +718,8 @@ Examples:
         email_expl_table = Table(title="Email Threat Explanation & Key Factors", title_style="header", box=box.SQUARE, border_style="border", expand=False)
         email_expl_table.add_column("Detail", style="base")
         email_expl_table.add_column("Information", style="base")
-        email_expl_table.add_row("Headline", summary.get('headline', 'N/A'))
-        email_expl_table.add_row("Explanation", summary.get('explanation', 'N/A'))
+        email_expl_table.add_row("Headline", summary.get('email_headline', 'N/A'))
+        email_expl_table.add_row("Explanation", summary.get('email_explanation', 'N/A'))
         
         email_kf = summary.get('text_factors', [])
         if email_kf:
