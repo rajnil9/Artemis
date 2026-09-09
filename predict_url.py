@@ -228,6 +228,9 @@ def main():
     from rich.tree import Tree
     from rich import box
     
+    from rich.panel import Panel
+    from rich.text import Text
+    
     custom_theme = Theme({
         "base": "#1F2937",
         "header": "bold #4338CA",
@@ -238,7 +241,7 @@ def main():
     console = Console(theme=custom_theme)
     
     # URL THREAT ENGINE ANALYSIS & MATHEMATICS
-    console.print(Rule("URL THREAT ENGINE ANALYSIS & MATHEMATICS", style="header"))
+    console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="header"), box=box.ROUNDED))
     console.print(f"[base]URL: [bold]{args.url}[/bold][/base]\n")
     console.print("[base]Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  (Softmax Normalization)[/base]\n")
     

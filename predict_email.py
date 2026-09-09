@@ -595,6 +595,9 @@ Examples:
     from rich.tree import Tree
     from rich import box
     
+    from rich.panel import Panel
+    from rich.text import Text
+    
     custom_theme = Theme({
         "base": "#1F2937",
         "header": "bold #4338CA",
@@ -605,7 +608,7 @@ Examples:
     console = Console(theme=custom_theme)
     
     # EMAIL TEXT ANALYSIS & MATHEMATICS
-    console.print(Rule("EMAIL TEXT ANALYSIS & MATHEMATICS", style="header"))
+    console.print(Panel(Text("EMAIL TEXT ANALYSIS & MATHEMATICS", justify="center", style="header"), box=box.ROUNDED))
     
     # Overview Table
     overview_table = Table(show_header=False, box=box.SQUARE, border_style="border", expand=False)
@@ -690,7 +693,7 @@ Examples:
     
     # URL THREAT ENGINE ANALYSIS & MATHEMATICS
     if response.get('detailed_url_analysis'):
-        console.print(Rule("URL THREAT ENGINE ANALYSIS & MATHEMATICS", style="header"))
+        console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="header"), box=box.ROUNDED))
         console.print("[base]Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  (Softmax Normalization)[/base]\n")
         
         for i, url_res in enumerate(response['detailed_url_analysis']):
@@ -738,7 +741,7 @@ Examples:
             console.print(Rule(style="border"))
             
     # FINAL COMBINED VERDICT
-    console.print(Rule("FINAL COMBINED VERDICT", style="danger"))
+    console.print(Panel(Text("FINAL COMBINED VERDICT", justify="center", style="danger"), box=box.ROUNDED))
     
     final_table = Table(show_header=False, box=box.SQUARE, border_style="border", expand=False)
     final_table.add_column("Property", style="header")
