@@ -691,6 +691,21 @@ Examples:
         math_tree.add(f"[base]{step}[/base]")
     console.print(math_tree)
     
+    # Email Threat Explanation & Key Factors
+    summary = response.get('analysis_summary', {})
+    if isinstance(summary, dict):
+        email_expl_table = Table(title="Email Threat Explanation & Key Factors", title_style="header", box=box.SQUARE, border_style="border", expand=False)
+        email_expl_table.add_column("Detail", style="base")
+        email_expl_table.add_column("Information", style="base")
+        email_expl_table.add_row("Headline", summary.get('headline', 'N/A'))
+        email_expl_table.add_row("Explanation", summary.get('explanation', 'N/A'))
+        
+        email_kf = summary.get('text_factors', [])
+        if email_kf:
+            kf_str = "\n".join([f"- {kf}" for kf in email_kf])
+            email_expl_table.add_row("Key Risk Factors", kf_str)
+        console.print(email_expl_table)
+    
     # URL THREAT ENGINE ANALYSIS & MATHEMATICS
     if response.get('detailed_url_analysis'):
         console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="header"), box=box.ROUNDED))
