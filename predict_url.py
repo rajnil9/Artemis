@@ -229,13 +229,13 @@ def main():
     console = Console()
     
     # URL THREAT ENGINE ANALYSIS & MATHEMATICS
-    console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="bold cyan"), box=box.DOUBLE))
+    console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="bold blue"), box=box.DOUBLE))
     console.print(f"URL: [bold]{args.url}[/bold]\n")
-    console.print("Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  [dim][Softmax Normalization][/dim]\n")
+    console.print("Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  [bold black][Softmax Normalization][/bold black]\n")
     
-    url_table = Table(title="Analysis Metrics", title_style="bold yellow", box=box.SIMPLE)
-    url_table.add_column("Metric", style="cyan")
-    url_table.add_column("Value", style="white")
+    url_table = Table(title="Analysis Metrics", title_style="bold magenta", box=box.ROUNDED)
+    url_table.add_column("Metric", style="blue")
+    url_table.add_column("Value", style="black")
     
     status = response.get('status', 'Unknown').upper()
     status_color = "red" if status in ["PHISHING", "MALWARE", "DEFACEMENT"] else "green"
@@ -255,17 +255,17 @@ def main():
     console.print(url_table)
     
     if math_breakdown.get('step_by_step'):
-        step_table = Table(title="Softmax Step-by-Step", title_style="dim", show_header=False, box=box.SIMPLE)
-        step_table.add_column("Step", style="dim")
+        step_table = Table(title="Softmax Step-by-Step", title_style="bold black", show_header=False, box=box.ROUNDED)
+        step_table.add_column("Step", style="bold black")
         for step in math_breakdown.get('step_by_step', []):
             step_table.add_row(f"- {step}")
         console.print(step_table)
         
     url_summary = response.get('analysis_summary', {})
     if url_summary:
-        expl_table = Table(title="URL Threat Explanation & Key Factors", title_style="bold red", box=box.SIMPLE)
-        expl_table.add_column("Detail", style="cyan")
-        expl_table.add_column("Information", style="white")
+        expl_table = Table(title="URL Threat Explanation & Key Factors", title_style="bold red", box=box.ROUNDED)
+        expl_table.add_column("Detail", style="blue")
+        expl_table.add_column("Information", style="black")
         expl_table.add_row("Headline", url_summary.get('headline', 'N/A'))
         expl_table.add_row("Explanation", url_summary.get('explanation', 'N/A'))
         
@@ -277,9 +277,9 @@ def main():
         
     extracted_features = response.get('extracted_features', {})
     if extracted_features:
-        feat_table = Table(title="Extracted URL Features (Metadata)", title_style="bold blue", box=box.SIMPLE)
-        feat_table.add_column("Feature", style="cyan")
-        feat_table.add_column("Value", style="green")
+        feat_table = Table(title="Extracted URL Features (Metadata)", title_style="bold blue", box=box.ROUNDED)
+        feat_table.add_column("Feature", style="blue")
+        feat_table.add_column("Value", style="black")
         sorted_feats = sorted([(k, v) for k, v in extracted_features.items() if v > 0 or isinstance(v, float) or isinstance(v, int)], key=lambda x: str(x[0]))
         for k, v in sorted_feats:
             if v != 0 and v != 0.0 and v != False:
