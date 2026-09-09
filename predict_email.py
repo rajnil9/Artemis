@@ -630,10 +630,10 @@ Examples:
     
     # EMAIL TEXT ANALYSIS & MATHEMATICS
     console.print(Panel(Text("EMAIL TEXT ANALYSIS & MATHEMATICS", justify="center", style="header"), box=box.ROUNDED))
+    console.print("[base]Formula: [bold]P_fused(c) = 0.40 * P_legacy(c) + 0.60 * P_modern(c)[/bold]  (Asymmetric Soft-Voting Ensemble)[/base]\n")
     
     # Overview Table
     overview_table = Table(show_header=False, box=box.SQUARE, border_style="border", expand=False)
-    overview_table.add_row("Formula:", "P_fused(c) = 0.40 * P_legacy(c) + 0.60 * P_modern(c)", style="base")
     nlp_pred = response['mathematical_breakdown']['baseline_nlp_prediction'].upper()
     overview_table.add_row("Base NLP Prediction:", nlp_pred, style="danger" if nlp_pred in ["PHISHING", "SPAM", "MALWARE"] else "safe")
     overview_table.add_row("Policy Override:", 'YES' if response['mathematical_breakdown']['security_policy_override'] else 'NO', style="base")
