@@ -90,20 +90,6 @@ The final output of the suite is a highly transparent, downloadable PDF report. 
 
 ---
 
-## 6. Evaluation & Benchmark Performance
-
-The Artemis Dual-Engine classification model was rigorously tested against numerous unseen, highly-evasive datasets.
-
-* **100% Accuracy Benchmarks**: 
-  * `test_set_50.csv` (50 samples): 100%
-  * `test_set_50_v2.csv` (50 samples): 100%
-  * `t5.csv` (30 samples): 100%
-* **High-Difficulty Validation**:
-  * `t7.csv` (40 samples): 97.50%
-  * `External Benchmark 1 Optimized` (60 samples): 98.33%
-  * `80-Sample Suite` (80 samples): 91.25%
-
----
 
 ## 7. URL Threat Engine Guide
 
@@ -145,69 +131,76 @@ Unlike emails, URLs are short and structured. They have extremely dense, specifi
 
 ### 3. How the Output is Generated
 
-When you run `python predict_url.py "https://example.com"`, the script outputs a highly structured JSON response designed to be easily consumed by any Frontend or API.
+When you run the combined `predict_email.py` pipeline, the script outputs a highly detailed terminal report synthesizing all modalities, including URL evaluation across all four classes (`Benign`, `Phishing`, `Malware`, `Defacement`).
 
-#### Output JSON Structure
-```json
-{
-  "status": "benign",
-  "class_probabilities": {
-    "benign": 100.0,
-    "defacement": 0.0,
-    "malware": 0.0,
-    "phishing": 0.0
-  },
-  "analysis_summary": {
-    "headline": "Classified as Benign (Safe)",
-    "explanation": "The URL exhibits standard domain parameters with clean lexical features and no indicators of typosquatting or path manipulation.",
-    "key_factors": [
-      "Valid registered root domain without brand impersonation triggers",
-      "Standard path depth and character length ratios",
-      "No suspicious Top-Level Domain (TLD) or raw IP hosting"
-    ]
-  },
-  "mathematical_breakdown": {
-    "formula": "P(k) = e^(z_k) / Sum(e^(z_j))",
-    "raw_logits_z": {
-      "benign": -2.946,
-      "defacement": -9.506,
-      "malware": -3.792,
-      "phishing": 0.277
-    },
-    "exponentials_exp_z": {
-      "benign": 0.053,
-      "defacement": 0.0,
-      "malware": 0.023,
-      "phishing": 1.319
-    },
-    "sum_denominator": 1.394,
-    "step_by_step": [
-      "Step 1: Gathered raw tree margin scores (logits) from LightGBM ensemble trees.",
-      "Step 2: Applied exponential transformation e^(z_k) to eliminate negative values.",
-      "Step 3: Summed exponentials and divided to normalize probabilities.",
-      "Step 4: Platform Subdomain Safeguard - Probabilities forcefully overridden to benign=100.0%."
-    ]
-  }
-}
+#### Output Generation Format
+```text
+================================================================================
+==================== [ EMAIL TEXT ANALYSIS & MATHEMATICS ] =====================
+================================================================================
+Formula:             P_fused(c) = 0.40 * P_legacy(c) + 0.60 * P_modern(c)
+Base NLP Prediction: PHISHING
+Policy Override:     NO
+
+--- Dual-Engine Class Probabilities ---
+Legacy Engine (40%):   phishing: 100.0%, safe: 0.0%, spam: 0.0%
+Modern Engine (60%):   phishing: 49.67%, safe: 0.0%, spam: 50.33%
+Final Class Probs:     phishing: 69.8%, safe: 0.0%, spam: 30.2%
+
+--- Adversarial Metrics ---
+Homoglyphs Normalized: True (2 detected & normalized)
+Zero-Width Chars:      2
+Evasion Detected:      YES (Adversarial Evasion Defeated)
+
+--- Explainable AI (Why the Model Flagged This Email) ---
+The AI model identified these key words as the primary linguistic triggers:
+  1. "required"     (found in Subject Line) -> Urgent demand compelling recipient compliance (+17.7% threat influence)
+  2. "hold"         (found in Subject Line) -> Induces panic over withheld package or missed shipment (+13.1% threat influence)
+  3. "fee"          (found in Email Body  ) -> Introduces unexpected financial demand or payment obligation (+6.8% threat influence)
+  4. "pay"          (found in Email Body  ) -> Directs recipient to execute an unverified monetary transaction (+6.3% threat influence)
+  5. "action"       (found in Subject Line) -> High-priority call-to-action typical in social engineering (+5.4% threat influence)
+
+--- Extracted Email Features (Metadata) ---
+Uppercase Ratio: 0.0494
+Url Ratio: 0.0385
+Urgent Ratio: 0.0385
+Spam Ratio: 0.0385
+Dollar Ratio: 0.0062
+
+--- Voting Weights & SVM Margin ---
+Legacy Engine Weight:  40.0%
+Modern Engine Weight:  60.0%
+Raw SVM Margin f(x):   3.189
+
+--- Step-by-Step Mathematics & Decision Process ---
+  - Step 1: Adversarial Text Normalization - Homoglyphs Normalized: True (2 lookalike(s)) | Zero-Width Chars Stripped: 2.
+  - Step 2: Decoupled Feature Extraction - TF-IDF n-grams (subject & body) & numerical metadata ratios.
+  - Step 3: Dual-Engine Hyperplane Evaluation - Legacy Model (phishing: 100.0%, safe: 0.0%, spam: 0.0%) | Modern Model (phishing: 49.67%, safe: 0.0%, spam: 50.33%).
+  - Step 4: Asymmetric Soft-Voting Ensemble (40% Legacy / 60% Modern) - Consensus (phishing: 69.8%, safe: 0.0%, spam: 30.2%) -> Baseline Prediction: PHISHING.
+
+================================================================================
+========================== [ FINAL COMBINED VERDICT ] ==========================
+================================================================================
+ABSOLUTE DECISION:   PHISHING
+Threat Severity:     Medium
+Recommended Action:  Review
+MITRE Technique:     N/A - N/A
+
+--- Key Security Factors (Synthesized Across All Modalities) ---
+  [Email Text Analysis]:
+    - Detected high-risk social engineering or urgent keywords.
+    - Detected bulk commercial or promotional marketing keywords.
+  [Adversarial Defense Telemetry]:
+    - Adversarial evasion attempt neutralized (2 zero-width invisible char(s) stripped, 2 Unicode homoglyph lookalike(s) normalized).
+
+--- Comprehensive Final Explanation ---
+Headline:    High Risk: Phishing / BEC Alert
+Explanation: The email contains indicators of social engineering, credential harvesting, financial redirection, or deceptive intent.
+================================================================================
 ```
 
 #### Breakdown of the Output
-1. **`status`**: The dominant classification (`benign`, `phishing`, `malware`, or `defacement`).
-2. **`class_probabilities`**: The Softmax percentages for all four classes.
-3. **`analysis_summary`**: Human-readable explanations ready to be displayed on a dashboard or extension UI.
-4. **`mathematical_breakdown`**: The exact ML formulas, raw logits (`z_k`), and Step-by-Step execution (including Safeguard interventions) for total transparency.
-
----
-
-### 4. Hackathon V2 Updates & Metrics
-
-During the latest V2 model retraining, the architecture was drastically scaled up and optimized:
-
-* **Dataset Scale**: Increased from ~100k to **630,615 fully deduplicated URLs**.
-* **Brand List Optimization**: The brand matching list was surgically reduced from 5,000+ uncurated entries to ~300 core high-value targets (PayPal, Stripe, Google, etc.). This dropped the Levenshtein scan time from 73ms down to 4ms per URL, enabling real-time extraction in production.
-* **OOM Fixes**: Massive memory reductions were added to `train_url.py` via aggressive `int8` downcasting, preventing Out-Of-Memory swap crashes during `train_test_split`.
-* **Performance Metrics**: The V2 LightGBM classifier reached an overall **Accuracy of 93%** on the validation set.
-    * **Phishing F1**: 0.86
-    * **Malware F1**: 0.98
-    * **Defacement F1**: 0.96
-    * **Benign F1**: 0.94
+1. **`Email Text Analysis`**: The raw mathematics and Explainable AI (XAI) token impacts from the dual-engine ensemble.
+2. **`Adversarial Metrics`**: Telemetry reporting exactly how many homoglyphs and zero-width characters were stripped to defeat obfuscation attempts.
+3. **`URL Threat Analysis`** *(When URLs are present)*: Extracts all embedded links and scores them across four classes (`Benign`, `Phishing`, `Malware`, `Defacement`).
+4. **`Final Combined Verdict`**: A synthesized decision merging text analysis, adversarial intent, and URL severity into one definitive security classification.
