@@ -219,7 +219,73 @@ def main():
     args = parser.parse_args()
     
     response = predict_url(args.url)
-    print(json.dumps(response, indent=2))
+    
+    from rich.console import Console
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.text import Text
+    from rich import box
+    
+    console = Console()
+    
+    # URL THREAT ENGINE ANALYSIS & MATHEMATICS
+    console.print(Panel(Text("URL THREAT ENGINE ANALYSIS & MATHEMATICS", justify="center", style="bold cyan"), box=box.DOUBLE))
+    console.print(f"URL: [bold]{args.url}[/bold]\n")
+    console.print("Formula: [bold]P(k) = e^(z_k) / Sum(e^(z_j))[/bold]  [dim][Softmax Normalization][/dim]\n")
+    
+    url_table = Table(title="Analysis Metrics", title_style="bold yellow", box=box.SIMPLE)
+    url_table.add_column("Metric", style="cyan")
+    url_table.add_column("Value", style="white")
+    
+    status = response.get('status', 'Unknown').upper()
+    status_color = "red" if status in ["PHISHING", "MALWARE", "DEFACEMENT"] else "green"
+    url_table.add_row("Status", f"[bold {status_color}]{status}[/bold {status_color}]")
+    
+    probs = response.get('class_probabilities', {})
+    if probs:
+        prob_str = ", ".join([f"{k}: {v}%" for k, v in probs.items()])
+        url_table.add_row("Class Probabilities", prob_str)
+        
+    math_breakdown = response.get('mathematical_breakdown', {})
+    if math_breakdown:
+        url_table.add_row("Logits", str(math_breakdown.get('raw_logits_z', {})))
+        url_table.add_row("Exponentials", str(math_breakdown.get('exponentials_exp_z', {})))
+        url_table.add_row("Sum Denominator", str(math_breakdown.get('sum_denominator', 'N/A')))
+        
+    console.print(url_table)
+    
+    if math_breakdown.get('step_by_step'):
+        step_table = Table(title="Softmax Step-by-Step", title_style="dim", show_header=False, box=box.SIMPLE)
+        step_table.add_column("Step", style="dim")
+        for step in math_breakdown.get('step_by_step', []):
+            step_table.add_row(f"- {step}")
+        console.print(step_table)
+        
+    url_summary = response.get('analysis_summary', {})
+    if url_summary:
+        expl_table = Table(title="URL Threat Explanation & Key Factors", title_style="bold red", box=box.SIMPLE)
+        expl_table.add_column("Detail", style="cyan")
+        expl_table.add_column("Information", style="white")
+        expl_table.add_row("Headline", url_summary.get('headline', 'N/A'))
+        expl_table.add_row("Explanation", url_summary.get('explanation', 'N/A'))
+        
+        url_kf = url_summary.get('key_factors', [])
+        if url_kf:
+            kf_str = "\n".join([f"- {kf}" for kf in url_kf])
+            expl_table.add_row("Key Risk Factors", kf_str)
+        console.print(expl_table)
+        
+    extracted_features = response.get('extracted_features', {})
+    if extracted_features:
+        feat_table = Table(title="Extracted URL Features (Metadata)", title_style="bold blue", box=box.SIMPLE)
+        feat_table.add_column("Feature", style="cyan")
+        feat_table.add_column("Value", style="green")
+        sorted_feats = sorted([(k, v) for k, v in extracted_features.items() if v > 0 or isinstance(v, float) or isinstance(v, int)], key=lambda x: str(x[0]))
+        for k, v in sorted_feats:
+            if v != 0 and v != 0.0 and v != False:
+                feat_table.add_row(str(k), str(v))
+        if feat_table.row_count > 0:
+            console.print(feat_table)
 
 if __name__ == "__main__":
     main()
