@@ -23,7 +23,7 @@ graph TD
     E -->|Combined Risk Assessment| F[Threat Classification Verdict]
     
     %% Final Unification
-    F --> N[Unified JSON Security Payload]
+    F --> N[Downloadable PDF Report]
 ```
 
 ---
@@ -75,9 +75,9 @@ This synthesis provides security analysts with a definitive, contextual understa
 
 ---
 
-## 5. Structured JSON Output Payload
+## 5. Downloadable PDF Report
 
-The final output of the suite is a highly transparent JSON payload. Below is the exact schema and explanation of the data delivered to analysts:
+The final output of the suite is a highly transparent, downloadable PDF report. Below is the exact schema and explanation of the data delivered to analysts:
 
 * **`status`**: The definitive verdict (`safe`, `spam`, `phishing`, `malware`).
 * **`threat_intelligence`**: MITRE ATT&CK mapping (`technique_id`, `technique_name`, `severity`).

@@ -39,7 +39,7 @@ graph TD
     L --> M
     
     %% Final Unification
-    F --> N[Unified JSON Security Payload]
+    F --> N[Downloadable PDF Report]
     M --> N
 ```
 
@@ -88,9 +88,9 @@ Extracts URLs from the email body and passes them to a deep structural URL class
 
 ---
 
-## 5. Structured JSON Output Payload
+## 5. Downloadable PDF Report
 
-The final output of the suite is a highly transparent JSON payload. Below is the exact schema and explanation of the data delivered to analysts:
+The final output of the suite is a highly transparent, downloadable PDF report. Below is the exact schema and explanation of the data delivered to analysts:
 
 * **`status`**: The definitive verdict (`safe`, `spam`, `phishing`, `malware`).
 * **`threat_intelligence`**: MITRE ATT&CK mapping (`technique_id`, `technique_name`, `severity`).
