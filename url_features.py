@@ -146,7 +146,7 @@ def extract_features(url):
         path = parsed.path.lower()
         features['path_length'] = len(path)
         
-        cms_keywords = ['wp-content', 'wp-admin', 'wp-includes', 'joomla', 'drupal', 'ghost', 'magento']
+        cms_keywords = ['wp-content', 'wp-admin', 'wp-includes', 'joomla', 'drupal', 'ghost', 'magento', 'components', 'modules']
         features['is_cms_path'] = 1 if any(kw in path for kw in cms_keywords) else 0
         
         executable_exts = ('.php', '.asp', '.aspx', '.cgi', '.jsp', '.html', '.htm')
