@@ -190,6 +190,8 @@ def predict_url(url: str) -> dict:
     # OVERRIDE 2: Fix Defacement confused as Benign or Phishing
     elif prediction in ["benign", "phishing"] and features.get('is_cms_path') == 1 and features.get('defacement_keywords') == 1:
         prediction = "defacement"
+        for cls in class_probabilities:
+            class_probabilities[cls] = 100.0 if cls == "defacement" else 0.0
         mathematical_breakdown["step_by_step"].append(
             "Step 4: Tie-Breaker - Prediction overridden to Defacement due to high-confidence CMS defacement path indicators."
         )

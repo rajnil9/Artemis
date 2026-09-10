@@ -146,6 +146,9 @@ def extract_features(url):
         path = parsed.path.lower()
         features['path_length'] = len(path)
         
+        cms_keywords = ['wp-content', 'wp-admin', 'wp-includes', 'joomla', 'drupal', 'ghost', 'magento']
+        features['is_cms_path'] = 1 if any(kw in path for kw in cms_keywords) else 0
+        
         executable_exts = ('.php', '.asp', '.aspx', '.cgi', '.jsp', '.html', '.htm')
         features['has_executable_ext'] = 1 if path.endswith(executable_exts) else 0
         
@@ -160,6 +163,7 @@ def extract_features(url):
     except Exception:
         # If the URL is so badly corrupted that it breaks the parser, we default these 
         # advanced features to 0 so the model can still use the basic character count features.
+        features['is_cms_path'] = 0
         features['is_legit_brand'] = 0
         features['is_root_domain'] = 0
         features['is_standard_tld'] = 0
